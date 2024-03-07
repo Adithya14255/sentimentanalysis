@@ -1,27 +1,35 @@
 import nltk
-from nltk.corpus import twitter_samples
 from nltk.tokenize import word_tokenize
+from googletrans import Translator
 from nltk.corpus import stopwords
 from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 import re
+import emoji
 
-nltk.download(['punkt','stopwords'])
+nltk.download(['punkt','stopwords','twitter_samples'])
 removeables = {':-)', ':)', ';)', ':o)', ':]', ':3', ':c)', ':>', '=]', '8)', '=)', ':}',
     ':^)', ':-D', ':D', '8-D', '8D', 'x-D', 'xD', 'X-D', 'XD', '=-D', '=D',
     '=-3', '=3', ':-))', ":'-)", ":')", ':*', ':^*', '>:P', ':-P', ':P', 'X-P',
     'x-p', 'xp', 'XP', ':-p', ':p', '=p', ':-b', ':b', '>:)', '>;)', '>:-)',
     '<3', ':L', ':-/', '>:/', ':S', '>:[', ':@', ':-(', ':[', ':-||', '=L', ':<',
     ':-[', ':-<', '=\\', '=/', '>:(', ':(', '>.<', ":'-(", ":'(", ':\\', ':-c',
-    ':c', ':{', '>:\\', ';(', '(', ')','*','=','!',"'",'&amp;',',','🐸','☕','👌',
-    '📰',':','🏻','😃','🙌','✅','😤','💪','🔥','😉','👏','😏','😂','😳','❌','😱','.',
+    ':c', ':{', '>:\\', ';(', '(', ')','*','=','!',"'",'&amp;',',',':','.','-','_','0','1','2','3','4','5','6','7','8','9',
     'via','RT','\n','#','@','http'}
 
 tweets = [[1,t] for t in nltk.corpus.twitter_samples.strings('positive_tweets.json')]
 tweets1 = [[-1,t] for t in nltk.corpus.twitter_samples.strings('negative_tweets.json')]
 tweets=tweets+tweets1
+
+def give_emoji_free_text(text):
+    return emoji.replace_emoji(text, replace='')
+
+for i in range(0,len(tweets)):
+    tweets[i][1]=give_emoji_free_text(tweets[i][1])
+
+
 for i in range(0,len(tweets)):
     for t in removeables:
         if t=='#':
@@ -38,13 +46,14 @@ for i in range(0,len(tweets)):
 
 
 
+
 def tokenize_text(text):
     return word_tokenize(text)
 
 # Stopwords removal
 stop_words = set(stopwords.words('english'))
 def remove_stopwords(tokens):
-    return [word for word in tokens if word.lower() not in stop_words]
+    return [word for word in tokens if word not in stop_words]
 
 labels=[]
 # Apply feature extraction functions to each text in the dataset
@@ -55,7 +64,7 @@ for text in tweets:
     tokens = remove_stopwords(tokens)
     processed_text_data.append(tokens)
 
-# Print processed text data
+
 for i in range(len(processed_text_data)):
     temp=""
     for j in processed_text_data[i]:
@@ -75,7 +84,7 @@ X = vectorizer.fit_transform(X)
 # Split the data into training and testing sets
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-# Initialize and train the sentiment analysis model (Random Forest classifier in this example)
+# Initialize and train the sentiment analysis model 
 model = RandomForestClassifier()
 model.fit(X_train, y_train)
 
@@ -86,7 +95,7 @@ y_pred = model.predict(X_test)
 accuracy = accuracy_score(y_test, y_pred)
 print("Accuracy:", accuracy)
 
-new_input_features = vectorizer.transform([
+new_data = [
     "I absolutely loved the movie! The acting was fantastic and the storyline was gripping.",
     "The customer service was terrible. I had to wait on hold for over an hour and the representative was rude.",
     "The food at the restaurant was delicious, but the service was slow and the prices were high.",
@@ -94,11 +103,20 @@ new_input_features = vectorizer.transform([
     "I'm feeling really stressed out lately. There's so much going on at work and I'm having trouble keeping up.",
     "The weather is perfect today! It's sunny and warm, with a gentle breeze.",
     "I'm disappointed with the quality of this product. It didn't live up to the advertised features.",
-    "I had a great time at the concert last night. The music was amazing and the atmosphere was electric.",
-    "I'm feeling grateful for the support of my friends and family during this difficult time.",
-    "The traffic on my commute this morning was unbearable. It took twice as long as usual to get to work."
-])
+    "pa,super machi",
+    "itna bura tha zindagi me never again",
+    "waste movie bro thiruppi varave maaten"
+]
 
+
+translator=Translator()
+translated=[]
+for i in new_data:
+    trans = translator.translate(i)
+    translated.append(trans.text)
+print(translated)
+
+new_input_features = vectorizer.transform(translated)
 # Predict the sentiment of the new inputs using the trained model
 predicted_sentiments = model.predict(new_input_features)
 print(predicted_sentiments)
