@@ -8,6 +8,10 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 import re
 import emoji
+import cleantext
+def cleaned_text(text):
+    text= emoji.replace_emoji(text, replace='')
+    return cleantext.clean_words(text,stemming=False,)
 
 nltk.download(['punkt','stopwords','twitter_samples'])
 removeables = {':-)', ':)', ';)', ':o)', ':]', ':3', ':c)', ':>', '=]', '8)', '=)', ':}',
@@ -102,7 +106,7 @@ new_data = [
     "I'm so excited to start my new job next week! I can't wait to meet my coworkers and dive into the work.",
     "I'm feeling really stressed out lately. There's so much going on at work and I'm having trouble keeping up.",
     "The weather is perfect today! It's sunny and warm, with a gentle breeze.",
-    "I'm disappointed with the quality of this product. It didn't live up to the advertised features.",
+    "I'm disappointed with the quality of this product. 12It didn't live up to the advertised features.",
     "pa,super machi",
     "itna bura tha zindagi me never again",
     "waste movie bro thiruppi varave maaten"
@@ -113,7 +117,8 @@ translator=Translator()
 translated=[]
 for i in new_data:
     trans = translator.translate(i)
-    translated.append(trans.text)
+    translated.append(cleaned_text(trans.text))
+translated=[re.sub(r"['\[\],]", "", str(t)).strip() for t in translated]
 print(translated)
 
 new_input_features = vectorizer.transform(translated)
